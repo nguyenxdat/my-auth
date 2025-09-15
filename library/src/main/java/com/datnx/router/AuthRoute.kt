@@ -13,6 +13,7 @@ import androidx.navigation.compose.composable
 import com.datnx.router.base.BaseRoute
 import com.datnx.router.manager.useAppRouter
 import com.datnx.design_system.components.ButtonApp
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 
 /**
@@ -95,8 +96,18 @@ fun LoginScreen() {
     val appRouter = useAppRouter()
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
-    val scope = rememberCoroutineScope()
-
+    LaunchedEffect(Unit) {
+        AuthStateManager.loginEvents.collect { event ->
+            when (event) {
+                is LoginEvent.Success -> {
+                    appRouter.pop()
+                }
+                is LoginEvent.Error -> {
+                    // Show error
+                }
+            }
+        }
+    }
     Scaffold(
         topBar = {
             TopAppBar(
@@ -123,18 +134,18 @@ fun LoginScreen() {
                 text = "Welcome Back",
                 style = MaterialTheme.typography.headlineMedium
             )
-            
+
             Spacer(modifier = Modifier.height(32.dp))
-            
+
             OutlinedTextField(
                 value = email,
                 onValueChange = { email = it },
                 label = { Text("Email") },
                 modifier = Modifier.fillMaxWidth()
             )
-            
+
             Spacer(modifier = Modifier.height(16.dp))
-            
+
             OutlinedTextField(
                 value = password,
                 onValueChange = { password = it },
@@ -142,28 +153,25 @@ fun LoginScreen() {
                 visualTransformation = PasswordVisualTransformation(),
                 modifier = Modifier.fillMaxWidth()
             )
-            
+
             Spacer(modifier = Modifier.height(24.dp))
 
-            ButtonApp(btnTitle = "Login", onBtnClick = {
-                scope.launch {
-                    AuthStateManager.login(email, password)
-                }
-
+            ButtonApp(btnTitle = "DS Button - Login", onBtnClick = {
+                AuthStateManager.login(email, password)
             })
 
             Spacer(modifier = Modifier.height(16.dp))
-            
+
             Row(
                 horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 ButtonApp(
-                    btnTitle = "Register",
+                    btnTitle = "DS Button - Register",
                     onBtnClick = {
                         appRouter.navigate(AuthRoute.REGISTER_ROUTE)
                     }
                 )
-                
+
                 TextButton(
                     onClick = {
                         appRouter.navigate(AuthRoute.FORGOT_PASSWORD_ROUTE)

@@ -1,3 +1,6 @@
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -5,6 +8,7 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 
 object AuthStateManager {
     private val _authState = MutableStateFlow<AuthState>(AuthState.Initial)
@@ -13,33 +17,40 @@ object AuthStateManager {
     private val _loginEvents = MutableSharedFlow<LoginEvent>()
     val loginEvents: SharedFlow<LoginEvent> = _loginEvents.asSharedFlow()
 
-    suspend fun checkInitialAuth() {
-        _authState.value = AuthState.Loading
-        delay(2000)
+    private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
-        val isLoggedIn = checkTokenValidity()
-        _authState.value = if (isLoggedIn) {
-            AuthState.Authenticated
-        } else {
-            AuthState.Unauthenticated
+    fun checkInitialAuth() {
+        scope.launch {
+            _authState.value = AuthState.Loading
+            delay(2000)
+
+            val isLoggedIn = checkTokenValidity()
+            _authState.value = if (isLoggedIn) {
+                AuthState.Authenticated
+            } else {
+                AuthState.Unauthenticated
+            }
         }
+
     }
 
-    suspend fun login(username: String, password: String) {
-        _authState.value = AuthState.Loading
-        try {
-            val result = performLoginApi(username, password)
-            delay(200)
-            if (result.isSuccess) {
-                _authState.value = AuthState.Authenticated
-                _loginEvents.emit(LoginEvent.Success)
-            } else {
-                _authState.value = AuthState.Error(result.error)
-                _loginEvents.emit(LoginEvent.Error(result.error))
+    fun login(username: String, password: String) {
+        scope.launch {
+            _authState.value = AuthState.Loading
+            try {
+                val result = performLoginApi(username, password)
+                delay(200)
+                if (result.isSuccess) {
+                    _authState.value = AuthState.Authenticated
+                    _loginEvents.emit(LoginEvent.Success)
+                } else {
+                    _authState.value = AuthState.Error(result.error)
+                    _loginEvents.emit(LoginEvent.Error(result.error))
+                }
+            } catch (e: Exception) {
+                _authState.value = AuthState.Error(e.message ?: "Unknown error")
+                _loginEvents.emit(LoginEvent.Error(e.message ?: "Unknown error"))
             }
-        } catch (e: Exception) {
-            _authState.value = AuthState.Error(e.message ?: "Unknown error")
-            _loginEvents.emit(LoginEvent.Error(e.message ?: "Unknown error"))
         }
     }
 

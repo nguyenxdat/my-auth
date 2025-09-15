@@ -15,6 +15,7 @@ fun MyAuthApp() {
     routeManager.apply {
         clearRouteProviders() // Clear any existing providers
         registerRouteProviders(
+            TestPlatformRoute(),
             AuthRoute(),
         )
     }
@@ -24,7 +25,7 @@ fun MyAuthApp() {
         // Setup routes using RouteManager
         routeManager.setupRoutes(
             navController = navController,
-            startDestination = AuthRoute.LOGIN_ROUTE
+            startDestination = TestPlatformRoute.SPLASH_ROUTE
         )()
     }
 }

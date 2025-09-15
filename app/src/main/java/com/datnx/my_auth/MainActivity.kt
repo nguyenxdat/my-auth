@@ -9,6 +9,7 @@ import com.datnx.my_auth.main.MyAuthApp
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        GlobalUser.init(this)
         setContent {
             MaterialTheme {
                 MyAuthApp()
