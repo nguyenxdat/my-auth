@@ -13,6 +13,7 @@ import androidx.navigation.compose.composable
 import com.datnx.router.base.BaseRoute
 import com.datnx.router.manager.useAppRouter
 import com.datnx.design_system.components.ButtonApp
+import kotlinx.coroutines.launch
 
 /**
  * Auth Route Implementation
@@ -94,7 +95,8 @@ fun LoginScreen() {
     val appRouter = useAppRouter()
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
-    
+    val scope = rememberCoroutineScope()
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -144,6 +146,9 @@ fun LoginScreen() {
             Spacer(modifier = Modifier.height(24.dp))
 
             ButtonApp(btnTitle = "Login", onBtnClick = {
+                scope.launch {
+                    AuthStateManager.login(email, password)
+                }
 
             })
 
